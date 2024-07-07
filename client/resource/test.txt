@@ -1,0 +1,18 @@
+This is a test file.
+
+response := http.Response{
+	Status:     "Not Implemented",
+	StatusCode: 501,
+	Proto:         "HTTP/1.0",
+	ProtoMajor:    1,
+	ProtoMinor:    0,
+	Header:        make(http.Header, 0),
+	Body:          ioutil.NopCloser(bytes.NewBufferString(body)),
+	ContentLength: int64(len(body)),
+	TransferEncoding: nil,
+	Close:            false,
+	Uncompressed:     false,
+	Trailer:          nil,
+	Request:          request,
+	TLS:              nil,
+}
