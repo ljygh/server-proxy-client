@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -133,7 +133,7 @@ func sendError(response http.Response, status string, statusCode int, bodyString
 	response.Status = status
 	response.StatusCode = statusCode
 	bodyString += "\nError code: " + fmt.Sprint(statusCode)
-	response.Body = ioutil.NopCloser(bytes.NewBufferString(bodyString))
+	response.Body = io.NopCloser(bytes.NewBufferString(bodyString))
 
 	buff := bytes.NewBuffer(nil)
 	response.Write(buff)

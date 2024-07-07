@@ -3,9 +3,10 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
@@ -21,23 +22,23 @@ func main() {
 	// request := http.NewRequest("GET", )
 
 	post()
-	head()
+	// head()
 }
 
 func post() {
-	fileBytes, err := ioutil.ReadFile("./resource/cscFile.html")
+	fileBytes, err := os.ReadFile("./resource/cscFile.html")
 	if err != nil {
 		// handle error
 		log.Fatalln("Error in ReadFile:", err)
 	}
-	resp, err := http.Post("http://127.0.0.1:8080/newFile.html", "text/html", bytes.NewReader(fileBytes))
+	resp, err := http.Post("http://127.0.0.1:8000/newFile.html", "text/html", bytes.NewReader(fileBytes))
 	if err != nil {
 		// handle error
 		log.Fatalln("Error in Post:", err)
 	}
 
 	// read response body
-	body, error := ioutil.ReadAll(resp.Body)
+	body, error := io.ReadAll(resp.Body)
 	if error != nil {
 		log.Fatalln("Error in ReadAll:", error)
 	}
@@ -57,7 +58,7 @@ func head() {
 		log.Fatalln("Error in Head:", err)
 	}
 	// read response body
-	body, error := ioutil.ReadAll(resp.Body)
+	body, error := io.ReadAll(resp.Body)
 	if error != nil {
 		log.Fatalln("Error in ReadAll:", error)
 	}

@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -146,12 +146,12 @@ func getHandler(response http.Response, request http.Request, conn net.TCPConn) 
 	}
 
 	// read file and write to response body
-	fileBytes, err := ioutil.ReadFile(filePath)
+	fileBytes, err := os.ReadFile(filePath)
 	if err != nil {
 		println("Server error in ReadFile:", err)
 		sendError(response, "Internal server error", 500, "Server error in ReadFile:", conn)
 	}
-	response.Body = ioutil.NopCloser(bytes.NewBuffer(fileBytes))
+	response.Body = io.NopCloser(bytes.NewBuffer(fileBytes))
 	response.ContentLength = int64(len(fileBytes))
 	// send response
 	sendResponse(response, conn)
@@ -189,7 +189,7 @@ func postHandler(response http.Response, request http.Request, conn net.TCPConn)
 	}
 
 	// Get content from request.Body
-	body, err := ioutil.ReadAll(request.Body)
+	body, err := io.ReadAll(request.Body)
 	if err != nil {
 		println("Server error while reading request's body", err)
 		sendError(response, "Server internal error", 500, "Server error while reading request's body", conn)
@@ -225,7 +225,7 @@ func postHandler(response http.Response, request http.Request, conn net.TCPConn)
 	// Construct response to show information and send it
 	response.Status = "Status OK"
 	response.StatusCode = 200
-	response.Body = ioutil.NopCloser(bytes.NewBufferString("Upload successfully\n"))
+	response.Body = io.NopCloser(bytes.NewBufferString("Upload successfully\n"))
 	response.ContentLength = int64(len("Upload successfully\n"))
 	sendResponse(response, conn)
 }
@@ -243,7 +243,7 @@ func sendError(response http.Response, status string, statusCode int, bodyString
 	response.Status = status
 	response.StatusCode = statusCode
 	bodyString += "\nError code: " + fmt.Sprint(statusCode)
-	response.Body = ioutil.NopCloser(bytes.NewBufferString(bodyString))
+	response.Body = io.NopCloser(bytes.NewBufferString(bodyString))
 
 	buff := bytes.NewBuffer(nil)
 	response.Write(buff)
