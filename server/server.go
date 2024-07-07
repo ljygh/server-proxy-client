@@ -11,23 +11,37 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 )
-
-var port string
-
-const maxClients = 2
 
 // Main function
 func main() {
-	// make channels for concurrency
-	ch := make(chan string, maxClients)
+	var port = "8000"
+	var maxClients = 2
 
-	// get port from argument
-	if len(os.Args) < 2 {
-		port = "8000"
-	} else {
-		port = os.Args[1]
+	// Get port and max number of clients from arguments
+	if len(os.Args) > 1 {
+		_, err := strconv.Atoi(os.Args[1])
+		if err != nil {
+			log.Fatalln("Error: port_number should be an integer.")
+			return
+		} else {
+			port = os.Args[1]
+		}
 	}
+	if len(os.Args) > 2 {
+		i, err := strconv.Atoi(os.Args[2])
+		if err != nil {
+			// handle the error here
+			log.Fatalln("Error: max_client_number should be an integer.")
+			return
+		} else {
+			maxClients = i
+		}
+	}
+
+	// Make channels for concurrency
+	ch := make(chan string, maxClients)
 
 	// Init TCP address
 	addr := "127.0.0.1:" + port
@@ -42,16 +56,17 @@ func main() {
 		log.Fatalln("Error in ListenTCP:", err)
 	}
 	fmt.Printf("Listen to %v:%v\n", tcpAddr.IP, tcpAddr.Port)
+	println("Max number of clients:", maxClients)
 
 	// Loop to accept new connection
 	for {
 		tcpConn, err := tcpLn.AcceptTCP()
-		remoteAddr := tcpConn.RemoteAddr().String()
-		println()
-		fmt.Println("New client:", remoteAddr)
 		if err != nil {
 			println("Error in AcceptTCP:", err)
 		}
+		remoteAddr := tcpConn.RemoteAddr().String()
+		println()
+		println("New client:", remoteAddr)
 		ch <- remoteAddr
 		go handleConnection(*tcpConn, ch)
 	}
@@ -63,17 +78,9 @@ func handleConnection(conn net.TCPConn, ch chan string) {
 	bufioReader := bufio.NewReader(&conn)
 	request, err := http.ReadRequest(bufioReader)
 	if err != nil {
-		// Read EOF, means tcp disconnects
-		if err.Error() == "EOF" {
-			println("Read request EOF")
-			conn.Close()
-			fmt.Printf("Client %v disconnets\n", <-ch)
-			return
-		}
-		fmt.Println("Error in ReadRequest:", err)
 		conn.Close()
-		fmt.Printf("Client %v disconnets\n", <-ch)
-		return
+		println("Error while reading request")
+		log.Fatalf("Client %v disconnets\n", <-ch)
 	}
 
 	// Construct response
@@ -98,7 +105,6 @@ func handleConnection(conn net.TCPConn, ch chan string) {
 
 	// disconnect tcp connection
 	conn.Close()
-	// time.Sleep(10 * time.Second)
 	fmt.Printf("Client %v disconnets\n", <-ch)
 }
 
@@ -155,6 +161,7 @@ func getHandler(response http.Response, request http.Request, conn net.TCPConn) 
 	response.ContentLength = int64(len(fileBytes))
 	// send response
 	sendResponse(response, conn)
+	// time.Sleep(10 * time.Second) // Used to test goroutines
 }
 
 // Handle POST request
@@ -228,6 +235,7 @@ func postHandler(response http.Response, request http.Request, conn net.TCPConn)
 	response.Body = io.NopCloser(bytes.NewBufferString("Upload successfully\n"))
 	response.ContentLength = int64(len("Upload successfully\n"))
 	sendResponse(response, conn)
+	// time.Sleep(10 * time.Second) // Used to test goroutines
 }
 
 // Send response with TCP connection
