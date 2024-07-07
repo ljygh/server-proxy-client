@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -11,28 +12,33 @@ import (
 	"os"
 )
 
+type Setting struct {
+	Port       string `json:"port"`
+	ServerUrl  string `json:"server_url"`
+	MaxClients int    `json:"max_clients"`
+}
+
 // Main function
 func main() {
 	// Init default port, IP addr, serverUrl and goroutine channels
-	port := "8080"
 	const localIP = "127.0.0.1"
+	port := "9000"
 	serverUrl := "http://localhost:8000"
-	ch := make(chan string, 2)
+	maxClients := 2
 
-	// Get port and server url if user determines
-	argsWithoutProg := os.Args[1:]
-	if len(argsWithoutProg) == 1 {
-		port = argsWithoutProg[0]
-	} else if len(argsWithoutProg) == 2 {
-		if argsWithoutProg[0] != "-" {
-			port = argsWithoutProg[0]
-		}
-		serverUrl = argsWithoutProg[1]
-	} else if len(argsWithoutProg) > 2 {
-		log.Fatalln("Too many arguments")
+	// Initialize variables from setting file
+	if len(os.Args) > 1 {
+		filepath := os.Args[1]
+		var setting Setting
+		getSetting(filepath, &setting)
+		port = setting.Port
+		serverUrl = setting.ServerUrl
+		maxClients = setting.MaxClients
 	}
+
+	ch := make(chan string, maxClients)
 	addr := localIP + ":" + port
-	println(serverUrl)
+	println("Server url:", serverUrl)
 
 	// Get TCP addr
 	tcpAddr, err := net.ResolveTCPAddr("tcp", addr)
@@ -58,6 +64,31 @@ func main() {
 		}
 		ch <- remoteAddr
 		go handleConnection(*tcpConn, ch, serverUrl)
+	}
+}
+
+// Get setting from json file
+func getSetting(filePath string, setting *Setting) {
+	// Open the JSON file
+	jsonFile, err := os.Open(filePath)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer jsonFile.Close()
+
+	// Read the file content
+	byteValue, err := io.ReadAll(jsonFile)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// Unmarshal the JSON data into the struct
+	err = json.Unmarshal(byteValue, setting)
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
 }
 

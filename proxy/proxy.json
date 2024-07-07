@@ -1,0 +1,5 @@
+{
+    "port": "9090",
+    "server_url": "http://localhost:8080",
+    "max_clients": 5
+}

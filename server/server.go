@@ -24,7 +24,7 @@ func main() {
 	var port = "8000"
 	var maxClients = 2
 
-	// Get port and max number of clients from arguments
+	// Get port and max number of clients from setting file
 	if len(os.Args) > 1 {
 		filepath := os.Args[1]
 		var setting Setting
