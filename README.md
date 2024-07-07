@@ -23,6 +23,12 @@ Default server url: "http://localhost:8000"
 Default max client number: 2.   
 
 ### 3. Running the client
+1. Test server and proxy with web browser. It can GET files and show them with server or proxy.
+2. Test server with POST in this way:
+```go run client.go [path to client setting file]```
+Default file path: "./resource/cscFile.html"
+Default server Url := "http://localhost:8000/cscFile.html"
+Default file type := "text/html"
 
 ## Implementation
 
@@ -31,4 +37,7 @@ It builds a tcp listener with ip address and port and loops to receive new conne
 
 ### 2. Proxy
 It only supports GET request. It will send the same request to the server and send the response of server to client.
+
+### 3. Client
+Implement post with http.
 

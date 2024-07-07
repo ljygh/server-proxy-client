@@ -1,0 +1,5 @@
+{
+    "server_url": "http://localhost:8000/jpgFile.jpg",
+    "file_path":  "./resource/jpgFile.jpg",
+    "file_type": "image/jpeg"
+}

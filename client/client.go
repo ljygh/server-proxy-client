@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -9,29 +10,32 @@ import (
 	"os"
 )
 
-func main() {
-	// conn, err := net.Dial("tcp", "127.0.0.1:8080")
-	// if err != nil {
-	// 	// handle error
-	// 	log.Fatalln("Error in Dial:", err)
-	// }
-	// fmt.Fprintf(conn, "GET / HTTP/1.0\r\n\r\n")
-	// status, err := bufio.NewReader(conn).ReadString('\n')
-	// fmt.Println(status)
-
-	// request := http.NewRequest("GET", )
-
-	post()
-	// head()
+type Setting struct {
+	ServerUrl string `json:"server_url"`
+	FilePath  string `json:"file_path"`
+	FileType  string `json:"file_type"`
 }
 
-func post() {
-	fileBytes, err := os.ReadFile("./resource/cscFile.html")
+func main() {
+	filePath := "./resource/cscFile.html"
+	serverUrl := "http://localhost:8000/cscFile.html"
+	fileType := "text/html"
+
+	if len(os.Args) > 1 {
+		settingFilePath := os.Args[1]
+		var setting Setting
+		getSetting(settingFilePath, &setting)
+		filePath = setting.FilePath
+		serverUrl = setting.ServerUrl
+		fileType = setting.FileType
+	}
+
+	fileBytes, err := os.ReadFile(filePath)
 	if err != nil {
 		// handle error
 		log.Fatalln("Error in ReadFile:", err)
 	}
-	resp, err := http.Post("http://127.0.0.1:8000/newFile.html", "text/html", bytes.NewReader(fileBytes))
+	resp, err := http.Post(serverUrl, fileType, bytes.NewReader(fileBytes))
 	if err != nil {
 		// handle error
 		log.Fatalln("Error in Post:", err)
@@ -51,22 +55,27 @@ func post() {
 	fmt.Println(string(body))
 }
 
-func head() {
-	resp, err := http.Head("http://127.0.0.1:8080/resource/newCssfile.css")
+// Get setting from json file
+func getSetting(filePath string, setting *Setting) {
+	// Open the JSON file
+	jsonFile, err := os.Open(filePath)
 	if err != nil {
-		// handle error
-		log.Fatalln("Error in Head:", err)
+		fmt.Println(err)
+		return
 	}
-	// read response body
-	body, error := io.ReadAll(resp.Body)
-	if error != nil {
-		log.Fatalln("Error in ReadAll:", error)
-	}
-	// close response body
-	resp.Body.Close()
+	defer jsonFile.Close()
 
-	// print response body
-	println(resp.Status)
-	println(resp.StatusCode)
-	fmt.Println(string(body))
+	// Read the file content
+	byteValue, err := io.ReadAll(jsonFile)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// Unmarshal the JSON data into the struct
+	err = json.Unmarshal(byteValue, setting)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 }
