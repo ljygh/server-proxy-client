@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -11,8 +12,12 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strconv"
 )
+
+type Setting struct {
+	Port       string `json:"port"`
+	MaxClients int    `json:"max_clients"`
+}
 
 // Main function
 func main() {
@@ -21,23 +26,11 @@ func main() {
 
 	// Get port and max number of clients from arguments
 	if len(os.Args) > 1 {
-		_, err := strconv.Atoi(os.Args[1])
-		if err != nil {
-			log.Fatalln("Error: port_number should be an integer.")
-			return
-		} else {
-			port = os.Args[1]
-		}
-	}
-	if len(os.Args) > 2 {
-		i, err := strconv.Atoi(os.Args[2])
-		if err != nil {
-			// handle the error here
-			log.Fatalln("Error: max_client_number should be an integer.")
-			return
-		} else {
-			maxClients = i
-		}
+		filepath := os.Args[1]
+		var setting Setting
+		getSetting(filepath, &setting)
+		port = setting.Port
+		maxClients = setting.MaxClients
 	}
 
 	// Make channels for concurrency
@@ -69,6 +62,31 @@ func main() {
 		println("New client:", remoteAddr)
 		ch <- remoteAddr
 		go handleConnection(*tcpConn, ch)
+	}
+}
+
+// Get setting from json file
+func getSetting(filePath string, setting *Setting) {
+	// Open the JSON file
+	jsonFile, err := os.Open(filePath)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer jsonFile.Close()
+
+	// Read the file content
+	byteValue, err := io.ReadAll(jsonFile)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// Unmarshal the JSON data into the struct
+	err = json.Unmarshal(byteValue, setting)
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
 }
 
